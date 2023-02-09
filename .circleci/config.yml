@@ -161,7 +161,7 @@ jobs:
               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
               
-      - run: ##problemmm heeereee
+      - run:  
           name: Add back-end ip to ansible inventory
           command: |
             aws ec2 describe-instances \
@@ -169,6 +169,7 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> inventory
+            cat .circleci/ansible/inventory.txt
 
       - persist_to_workspace:
           root: ~/
@@ -179,6 +180,7 @@ jobs:
           channel:  $SLACK_DEFAULT_CHANNEL
           event: fail
           template: basic_fail_1
+          message: "Job failed with error: {{ .FailureReason }} please help me"
         
       # -  destroy-environment:
       #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -191,8 +193,8 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["ef:7d:e5:f5:42:c3:a5:41:02:f3:1f:34:65:a7:2c:cc"]
-#       # attach workspace
-#still attach workspace 
+      - attach_workspace:
+          at: ~/
       - run:
           name: Install dependencies
           command: |
@@ -205,6 +207,12 @@ jobs:
           command: |
              cd .circleci/ansible
              ansible-playbook -i inventory.txt configure-server.yml
+      - slack/notify:
+          channel:  $SLACK_DEFAULT_CHANNEL
+          event: fail
+          template: basic_fail_1
+          message: "configure-infrastructure Job failed with error: {{ .FailureReason }} please help me"
+        
 #       # Here's where you will add some code to rollback on failure  
  # -  destroy-environment:
       #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}    
@@ -340,8 +348,8 @@ workflows:
           # filters:
           #   branches:
           #     only: [test-feature-branch]
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       # - run-migrations:
       #     requires: [configure-infrastructure]
       # - deploy-frontend:
