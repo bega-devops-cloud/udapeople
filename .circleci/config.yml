@@ -267,10 +267,10 @@ jobs:
             # your code here
             yum update -y
             yum install -y python3
-      - run:
-          name: Install dependencies for ansible
-          command: |
-            yum install -y ansible
+      # - run:
+      #     name: Install dependencies for ansible
+      #     command: |
+      #       yum install -y ansible
       - run:
           name: Install dependencies for nodejs  # yum install -y nodejs    
           command: |
@@ -280,10 +280,10 @@ jobs:
             node -v
             npm -v
 
-      - run:
-          name: Install dependencies for awscli  
-          command: |
-            yum install -y  awscli
+      # - run:
+      #     name: Install dependencies for awscli  
+      #     command: |
+      #       yum install -y  awscli
       - run:
           name: Get backend url
           command: |
@@ -334,8 +334,8 @@ jobs:
             pip install awscli 
             apk add --update ansible
             apk add --no-cache curl
-            curl -sL https://deb.nodesource.com/setup_13.x | sh
-            apk add nodejs
+            apk add bash
+            curl -sL https://deb.nodesource.com/setup_13.x | bash apk add nodejs
 
       - run:
           name: Deploy backend
