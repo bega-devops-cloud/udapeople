@@ -334,9 +334,9 @@ jobs:
             pip install awscli 
             apk add --update ansible
             apk add --no-cache curl
-            apk add bash
-            curl -sL https://deb.nodesource.com/setup_13.x | bash apk add nodejs
+            apk add --update nodejs
 
+      #curl -sL https://deb.nodesource.com/setup_13.x | bash apk add nodejs
       - run:
           name: Deploy backend
           command: |
