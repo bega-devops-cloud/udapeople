@@ -169,7 +169,7 @@ jobs:
           command: |
             aws ec2 describe-instances \
               --region us-east-1 \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --query 'Reservations[*].Instances[*].PublicDnsName' \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
@@ -296,7 +296,7 @@ jobs:
           name: Get backend url
           command: |
             
-            export BACKEND_IP=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+            export BACKEND_IP=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
@@ -388,7 +388,7 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
+            export BACKEND_IP=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
     
@@ -396,11 +396,11 @@ jobs:
           name: Backend smoke test.
           command: |
             
-            if curl "${API_URL}/api/status" | grep "ok"
+            if curl -s "${API_URL}/api/status" | grep "ok"
             then
-              return 0
+              exit 0
             else
-              return 1
+              exit 1
             fi
       - run:
           name: Frontend smoke test.
@@ -427,7 +427,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            # your code here
+            yum install -y tar gzip curl
       - run:
           name: Update cloudfront distribution
           command: |
@@ -469,11 +469,12 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          # filters:
-          #   branches:
-          #     only: [test-feature-branch]
+          filters:
+            branches:
+              only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
+          
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
