@@ -289,8 +289,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["ef:7d:e5:f5:42:c3:a5:41:02:f3:1f:34:65:a7:2c:cc"]
-      - attach_workspace:
-          at: ~/
+      
       - run:
           name: Install tar gzip curl
           command: |
@@ -301,6 +300,8 @@ jobs:
             # your code here
             yum update -y
             yum install -y python3
+      - attach_workspace:
+          at: ~/
       # - run:
       #     name: Install dependencies for ansible
       #     command: |
