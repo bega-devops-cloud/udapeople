@@ -4,14 +4,15 @@
   apt:
     upgrade: "yes"
 
-# - name: "Add Node.js from source"
-#   become: true
-#   shell: |
-#     curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-- name: "install dependencies."
+- name: "Add Node.js from source"
+  become: true
+  shell: |
+    curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+
+- name: "install Node.js 13"
   become: true
   apt:
-    name: ["nodejs", "npm"]
+    name: ["nodejs"]
     state: latest
     update_cache: yes
 
