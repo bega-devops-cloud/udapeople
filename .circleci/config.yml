@@ -3,6 +3,7 @@ orbs:
   slack: circleci/slack@4.1
 
 commands:
+
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -16,7 +17,7 @@ commands:
           when: on_fail
           command: |
             echo "Destroying environment" : <<parameters.workflow_id>>
-            aws s3 rm s3://udapeople-<<parameters.workflow_id>>-- recursive
+            aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
             aws  cloudformation delete-stack --stack-name  "udapeople-backend-<<parameters.workflow_id>>
             aws  cloudformation delete-stack --stack-name "udapeople-frontend<<parameters.workflow_id>>
             
@@ -25,7 +26,7 @@ commands:
     parameters:
       workflow_id:
           type: string
-            
+          default: ${CIRCLE_WORKFLOW_ID:0:7}   
     steps:
       - run:
           name: Revert migrations
@@ -35,9 +36,9 @@ commands:
             SUCCESS = $(curl --insecure https://kvdb.io/${KVDB_BUCKET_ID}/migration_<<parameters.workflow_id>>)
             if(( $SUCCESS==1 )); 
             then
-            cd ~/project/backend
-            npm install
-            npm run migration:revert
+              cd ~/project/backend
+              npm install
+              npm run migration:revert
             fi
 
   install_ansible:
@@ -50,7 +51,25 @@ commands:
             sudo apt install software-properties-common -y
             sudo add-apt-repository --yes --unpdate ppa:ansible/ansible
             sudo apt install ansible -y
+  
+  install_awscli:
+    description: Install Aws cli
+    steps:
+      - run:
+          name: Install Aws cli
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
 
+  install_nodejs:
+    description: Install Node.js 13
+    steps:
+      - run:
+          name: Install Node.js 13
+          command: |
+             curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+             sudo apt install -y nodejs
     # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
     #  Add revert code here. You can find this in the Getting Started section.
           #    exit 1        
@@ -158,7 +177,8 @@ jobs:
       - checkout
       - run:
           name: Install tar and gzip
-          command:   yum update -y &&  yum install -y tar gzip
+          command: yum install -y tar gzip
+      #yum update -y && 
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -187,6 +207,7 @@ jobs:
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> .circleci/ansible/inventory.txt
             cat .circleci/ansible/inventory.txt
+            echo "CIRCLE_WORKFLOW_ID: ${CIRCLE_WORKFLOW_ID:0:7}"
             # export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" --output text)
             # echo $(BACKEND_IP)
 
@@ -209,22 +230,23 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: python:3.7-alpine3.11 
-      #cimg/base:stable
+      - image: cimg/base:stable
+      # python:3.7-alpine3.11 
     steps:
       - checkout
       - add_ssh_keys:
           fingerprints: ["ef:7d:e5:f5:42:c3:a5:41:02:f3:1f:34:65:a7:2c:cc"]
       - attach_workspace:
           at: ~/
-      #- install_ansible
-      - run:
-          name: Install dependencies
-          command: |
-            apk add tar gzip
-            apk add --update py-pip
-            pip install awscli 
-            apk add --update ansible
+      - install_ansible
+      #- install_awscli
+      # - run:
+      #     name: Install dependencies
+      #     command: |
+      #       apk add tar gzip
+      #       apk add --update py-pip
+      #       pip install awscli 
+      #       apk add --update ansible
       - run:
           name: Configure server
           command: |
@@ -254,20 +276,21 @@ jobs:
             cd backend
             npm install
             npm run migrations > migrations_dump.txt
+            echo "migration_dump:"
             cat  migrations_dump.txt
       - run:
           name: Send migration results to KVDB
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt 
             then
-            curl --insecure https://kvdb.io/${KVDB_BUCKET_ID}/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1' 
+            curl --insecure https://kvdb.io/${KVDB_BUCKET_ID}/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1' 
             fi
-      - run:
-          name: Install AWS CLI
-          command: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
+      # - run:
+      #     name: Install AWS CLI
+      #     command: |
+      #       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      #       unzip awscliv2.zip
+      #       sudo ./aws/install
 
       - slack/notify:
           channel:  $SLACK_DEFAULT_CHANNEL
@@ -284,36 +307,40 @@ jobs:
           
   deploy-frontend:
     docker:
-      - image: amazon/aws-cli
+      - image: cimg/base:stable
+      #amazon/aws-cli
     steps:
       - checkout
       - add_ssh_keys:
           fingerprints: ["ef:7d:e5:f5:42:c3:a5:41:02:f3:1f:34:65:a7:2c:cc"]
       
-      - run:
-          name: Install tar gzip curl
-          command: |
-            yum install -y tar gzip curl
-      - run:
-          name: Install dependencies for python3  
-          command: |
-            # your code here
-            yum update -y
-            yum install -y python3
+      # - run:
+      #     name: Install tar gzip curl
+      #     command: |
+      #       yum install -y tar gzip curl
+      # - run:
+      #     name: Install dependencies for python3  
+      #     command: |
+      #       # your code here
+      #       yum update -y
+      #       yum install -y python3
       - attach_workspace:
           at: ~/
       # - run:
       #     name: Install dependencies for ansible
       #     command: |
       #       yum install -y ansible
-      - run:
-          name: Install dependencies for nodejs  # yum install -y nodejs    
-          command: |
+      - install_awscli
+      - install_nodejs
+      - install_ansible
+      # - run:
+      #     name: Install dependencies for nodejs  # yum install -y nodejs    
+      #     command: |
             
-            curl -sL https://rpm.nodesource.com/setup_13.x | bash -
-            yum install -y nodejs
-            node -v
-            npm -v
+      #       curl -sL https://rpm.nodesource.com/setup_13.x | bash -
+      #       yum install -y nodejs
+      #       node -v
+      #       npm -v
 
       # - run:
       #     name: Install dependencies for awscli  
@@ -337,11 +364,13 @@ jobs:
           name: Deploy frontend objects
           command: |
             cd frontend
+            sudo npm install -g npm@latest
+            rm -rf node_modules
             npm install
-            npm audit fix
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            echo "s3 name: udapeople-${CIRCLE_WORKFLOW_ID:0:7}"
       # Here's where you will add some code to rollback on failure 
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}     
@@ -351,7 +380,8 @@ jobs:
   deploy-backend:
     docker:
       # Docker image here that supports Ansible
-      - image: python:3.7-alpine3.11
+      - image: cimg/base:stable
+    #python:3.7-alpine3.11
     steps:
       # Checkout code from git
       - checkout
@@ -361,19 +391,23 @@ jobs:
       # attach workspace
       - attach_workspace:
           at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here  
-            apk update          
-            apk add tar gzip
-            apk add --update py-pip
-            pip install awscli 
-            apk add --update ansible
-            apk add --no-cache curl
-            apk add --update nodejs npm
-            apk add jq curl
+      # - run:
+      #     name: Install dependencies
+      #     command: |
+      #       # your code here  
+      #       apk update          
+      #       apk add tar gzip
+      #       apk add --update py-pip
+      #       pip install awscli 
+      #       apk add --update ansible
+      #       apk add --no-cache curl
+      #       apk add --update nodejs npm
+      #       apk add jq curl
       #curl -sL https://deb.nodesource.com/setup_13.x | bash apk add nodejs
+      
+      - install_awscli
+      - install_nodejs
+      - install_ansible
       - run:
           name: Deploy backend
           command: |
@@ -423,6 +457,7 @@ jobs:
           name: Backend smoke test.
           command: |
             #exit 0
+            echo "API_URL_status = ${API_URL}/api/status"
             if curl --connect-timeout 5 "${API_URL}/api/status" | grep "ok"
             then
               exit 0
