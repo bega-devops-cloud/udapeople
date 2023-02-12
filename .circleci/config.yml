@@ -40,10 +40,10 @@ commands:
             npm run migration:revert
             fi
 
-  install ansible:
+  install_ansible:
     description: Install Ansible
     steps:
-      -run:
+      - run:
           name: Install Ansible
           command: |
             sudo apt update
@@ -217,7 +217,7 @@ jobs:
           fingerprints: ["ef:7d:e5:f5:42:c3:a5:41:02:f3:1f:34:65:a7:2c:cc"]
       - attach_workspace:
           at: ~/
-      #- install ansible
+      #- install_ansible
       - run:
           name: Install dependencies
           command: |
