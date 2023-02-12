@@ -32,19 +32,41 @@
 #     global: yes
 #     production: yes
 #     state: present
+- name: "Create backend app directory"
+  file:
+    path: ~/backend-app
+    state: directory
 
 - name: extract artifact
   become: yes
   unarchive:
-    src: files/artifact.tar.gz
-    dest: .
+    src: artifact.tar.gz
+    dest: ~/backend-app
 
 - name: "start app"
   become: yes 
   shell: |
+    cd ~/backend-app
     npm install
-    pm2 stop all
-    pm2 start npm -- start
+    cd ~/backend-app/dist
+    cd ../
+    npm install
+    npm run build
+    sudo npm install forever -g
+    sudo npm install ts-node -g
+    forever start -c "ts-node -r tsconfig-path/register -r dotenv/config src/main.ts" ./
+
+  register : execute_node
+- name: print message
+  debug:
+    msg: "{{execute_node.stdout_lines}}"
+
+- name: "Configure pm2 to start as service"
+  become: true
+  shell: |
+    env PATH=$PATH:/usr/local/bin pm2 startup systemd -u ubuntu --hp /home/ubuntu
+  # pm2 stop all
+  # pm2 start npm -- start
   # command: pm2 stop default
   # command: pm2 start npm -- start
 # npm install
