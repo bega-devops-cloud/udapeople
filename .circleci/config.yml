@@ -37,6 +37,7 @@ commands:
             # Logic for reverting the database state
             if [ $SUCCESS -eq 1 ];
             then
+                cd ..
                 ls
                 #cd backend
                 #npm install
