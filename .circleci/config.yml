@@ -40,7 +40,7 @@ commands:
                 cd ..
                 ls
                 find ./project -name backend
-                cd project#/backend
+                cd project
                 ls
                 #npm install
                 #npm run migration:revert
