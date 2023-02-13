@@ -1,6 +1,6 @@
 export TYPEORM_CONNECTION=postgres
 export TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts
-export TYPEORM_HOST=database-1-udapeople.ca9isvmkylw2.us-east-1.rds.amazonaws.com
+export TYPEORM_HOST=udapeople-data.ca9isvmkylw2.us-east-1.rds.amazonaws.com
 export TYPEORM_PORT=5432
 export TYPEORM_USERNAME=postgres
 export TYPEORM_PASSWORD=haribou88
