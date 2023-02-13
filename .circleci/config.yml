@@ -33,9 +33,9 @@ commands:
           when: on_fail
           command: |
             echo "$(curl --insecure  https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_<< parameters.workflow_id >>)"
-            SUCCESS=$(curl --insecure  https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_<< parameters.workflow_id >>)
+            SUCCESS=$(curl --insecure --connect-timeout 10 https://kvdb.io/${KVDB_BUCKET_ID}/migration_<< parameters.workflow_id >>)
             # Logic for reverting the database state
-            if (( $SUCCESS == 1 ));
+            if [ $SUCCESS -eq 1 ];
             then
                 cd ~/project/backend
                 npm install
