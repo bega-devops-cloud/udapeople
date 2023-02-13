@@ -477,9 +477,9 @@ jobs:
             fi
       # echo "API_URL = ${API_URL}"
       # echo "API_URL_status = ${API_URL}/api/status"
-       - run:
-           name: Backend smoke test.
-           command: |
+      - run:
+          name: Backend smoke test.
+          command: |
              #exit 0
              echo "API_URL_status = ${API_URL}/api/status"
              if curl --connect-timeout 5 "${API_URL}/api/status" | grep "ok"
