@@ -32,14 +32,15 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            
-            SUCCESS=$(curl --insecure "https://kvdb.io/${KVDB_BUCKET_ID}/migration_<<parameters.workflow_id>>")
-            if(( $SUCCESS == 1 )); 
+            echo "$(curl --insecure  https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_<< parameters.workflow_id >>)"
+            SUCCESS=$(curl --insecure  https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_<< parameters.workflow_id >>)
+            # Logic for reverting the database state
+            if (( $SUCCESS == 1 ));
             then
-              cd ~/project/backend
-              npm install
-              npm run migration:revert
-            fi
+                cd ~/project/backend
+                npm install
+                npm run migration:revert
+            fi  
 
   install_ansible:
     description: Install Ansible
@@ -450,18 +451,15 @@ jobs:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
   smoke-test:
     docker:
-      # Lightweight Docker image 
-      - image: python:3.7-alpine3.11
+      - image: cimg/node:13.8.0
     steps:
-      - checkout
       - run:
-          name: Install dependencies
+          name: Install AWS CLI 
           command: |
-            apk add --update nodejs npm
-            apk add jq curl
-            apk add --update py-pip
-            pip install awscli 
-      #apk add --no-cache curl
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+            # sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin
       - run:
           name: Get backend url
           command: |
