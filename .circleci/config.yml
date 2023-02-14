@@ -42,7 +42,7 @@ commands:
                 find ./project -name backend
                 cd project/backend
                 npm install
-                npm run migration:revert
+                npm run migrations:revert
             fi  
 
   install_ansible:
@@ -489,7 +489,7 @@ jobs:
                exit 0
              else
                exit 1
-             #fi
+             fi
       - run:
           name: Frontend smoke test.
           command: |
